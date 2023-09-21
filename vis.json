@@ -1,0 +1,20 @@
+[
+    {
+        "lora_path": "/home/dingkaixin/visual-concept-translator/output/glaceon_09_10_2023_1044/checkpoint-500/pytorch_model.bin",
+        "unet_alpha": 1.0,
+        "text_encoder_alpha": 1.0,
+        "concept_name": "<glaceon1> <glaceon2>"
+    },
+    {
+        "lora_path": "/home/dingkaixin/visual-concept-translator/output/concept_image_09_10_2023_1027/checkpoint-500/pytorch_model.bin",
+        "unet_alpha": 1.0,
+        "text_encoder_alpha": 1.0,
+        "concept_name": "<girl1> <girl2>"
+    },
+    {
+	"lora_path": "/home/dingkaixin/visual-concept-translator/output/minccino_09_10_2023_1116/checkpoint-500/pytorch_model.bin",
+	"unet_alpha": 1.0,
+	"text_encoder_alpha": 1.0,
+	"concept_name": "<minccino1> <minccino2>"
+    }	
+]
