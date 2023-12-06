@@ -53,6 +53,7 @@ def gen_image(
         guidance_scale=7.5,
         no_controller=False,
         use_direct_inversion=False,
+        forward_prompt="",
 ):
     backward_embeds_dict_name = "_%s__%s.bin" % (prompt_name_backward, str(train_step))
     backward_placeholder_token = "<%s>" % prompt_name_backward
@@ -76,6 +77,7 @@ def gen_image(
     inversion = Inversion(ldm_stable)
 
     # controller arguments
+    inversion.init_prompt(forward_prompt)
     ptp_utils.register_attention_control(inversion.model, None)
     cross_attention_injection_ratio = 0.2
     self_attention_injection_ratio = 0.9

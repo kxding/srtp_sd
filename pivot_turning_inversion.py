@@ -91,9 +91,7 @@ def main(model_id, image_path, step_list, prompt_name_backward, forward_prompt, 
     pipe.scheduler = DDIMScheduler.from_config(os.path.join(pretrained_model_name_or_path, "scheduler"))
     pipe = pipe.to("cuda")
     
-    for train_step in step_list:
-        
-        
+    for train_step in step_list: 
         backward_embeds_dict_name = "_%s__%s.bin"%(prompt_name_backward, str(train_step))
         backward_placeholder_token = "<%s>"%prompt_name_backward
         backward_embeds_dict_path = os.path.join(model_id, backward_embeds_dict_name)

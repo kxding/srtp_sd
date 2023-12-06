@@ -234,7 +234,12 @@ class AttentionControlEdit(AttentionStore, abc.ABC):
             attn = attn.reshape(self.batch_size, h, *attn.shape[1:])
             attn_base, attn_repalce = attn[0], attn[1:]
             if is_cross:
-                alpha_words = self.cross_replace_alpha[self.cur_step]
+                if self.cur_step >= len(self.cross_replace_alpha):
+                    alpha_words = self.cross_replace_alpha[-1]
+                else:
+                    alpha_words = self.cross_replace_alpha[self.cur_step]
+
+                # alpha_words = self.cross_replace_alpha[self.cur_step]
                 attn_repalce_new = self.replace_cross_attention(attn_base, attn_repalce) * alpha_words + (1 - alpha_words) * attn_repalce
                 attn[1:] = attn_repalce_new
             else:
@@ -632,7 +637,11 @@ class Inversion(DiffusionPipeline):
     @torch.no_grad()
     def offset_calculate(self, latents, init_context, num_inner_steps=50, epsilon=1e-5, guidance_scale=7.5, num_ddim_steps=50):
         noise_loss_list = []
-        print("init_context", init_context.shape)
+        print("init_context = ", init_context.shape)
+        if isinstance(self.context, torch.Tensor):  
+            print("input_tensor 是张量类型")
+        else:  
+            self.context = torch.tensor(self.context)
         # print("uncond_embeddings", uncond_embeddings[0].shape)
         print("self.context", self.context.shape)
         latent_cur = torch.concat([latents[-1]]*(self.context.shape[0]//2))
@@ -805,43 +814,7 @@ class Inversion(DiffusionPipeline):
         image_rec = self.latent2image(latent)
         ddim_latents = self.ddim_loop(latent,num_ddim_steps=50)
         return image_rec, ddim_latents
-    
-
-    def null_optimization(self, latents, num_inner_steps, epsilon,guidance_scale=7.5,num_ddim_steps=50):
-        uncond_embeddings, cond_embeddings = self.context.chunk(2)
-        uncond_embeddings_list = []
-        latent_cur = latents[-1]
-        bar = tqdm(total=num_inner_steps * num_ddim_steps)
-        for i in range(num_ddim_steps):
-            uncond_embeddings = uncond_embeddings.clone().detach()
-            uncond_embeddings.requires_grad = True
-            optimizer = Adam([uncond_embeddings], lr=1e-2 * (1. - i / 100.))
-            latent_prev = latents[len(latents) - i - 2]
-            t = self.model.scheduler.timesteps[i]
-            with torch.no_grad():
-                noise_pred_cond = self.get_noise_pred_single(latent_cur, t, cond_embeddings)
-                
-            for j in range(num_inner_steps):
-                noise_pred_uncond = self.get_noise_pred_single(latent_cur, t, uncond_embeddings)
-                noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_cond - noise_pred_uncond)
-                latents_prev_rec = self.prev_step(noise_pred, t, latent_cur)
-                loss = nnf.mse_loss(latents_prev_rec, latent_prev)
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                loss_item = loss.item()
-                bar.update()
-                if loss_item < epsilon + i * 2e-5:
-                    break
-            for j in range(j + 1, num_inner_steps):
-                bar.update()
-            uncond_embeddings_list.append(uncond_embeddings[:1].detach())
-            with torch.no_grad():
-                context = torch.cat([uncond_embeddings, cond_embeddings])
-                latent_cur = self.get_noise_pred(latent_cur, t, False, context)
-        bar.close()
-        return uncond_embeddings_list
-    
+     
     
     def null_optimization_path(self, latent_list,cond_embeddings,num_inner_steps, epsilon, guidance_scale=7.5,num_ddim_steps=50):
         uncond_embeddings = self.get_text_embedding("")
