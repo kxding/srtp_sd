@@ -735,7 +735,8 @@ class Inversion(DiffusionPipeline):
             if use_direct_inversion:
                 latents = ptp_utils.diffusion_step_direct_inversion(model, controller, latents, context, t, guidance_scale, noise_loss=noise_loss_list[i], low_resource=False, add_offset=True)
             else:
-                latents = ptp_utils.diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False, add_offset=True)
+                print("original context shape = ", context.shape)
+                latents = ptp_utils.diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False)
 
             if return_all:
                 all_latents.append(latents)

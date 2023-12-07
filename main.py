@@ -611,7 +611,9 @@ def multi_concept_inversion():
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision
     )
-
+    generator = torch.Generator(device=accelerator.device)
+    if args.seed is not None:
+        generator.manual_seed(args.seed)
     # Add the placeholder token in tokenizer
     # num_added_tokens = tokenizer.add_tokens(args.placeholder_token)
     '''if num_added_tokens == 0:
@@ -880,6 +882,9 @@ def multi_concept_inversion():
         if args.push_to_hub:
             repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
 
+        torch.save(src_embedding_list, os.path.join(args.output_dir, f'{""}_{global_step}.bin'))
+
+
     accelerator.end_training()
     return args, src_reversed_latent_list, src_embedding_list, src_file_name
 
@@ -905,4 +910,6 @@ if __name__ == "__main__":
         guidance_scale=args.guidance_scale_gen,
         no_controller=args.no_controller,
         use_direct_inversion=args.use_direct_inversion,
+        cross_attention_injection_ratio=args.cross_attention_injection_ratio,
+        self_attention_injection_ratio=args.self_attention_injection_ratio,
     )
