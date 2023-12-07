@@ -886,7 +886,7 @@ def multi_concept_inversion():
 
 
     accelerator.end_training()
-    return args, src_reversed_latent_list, src_embedding_list, src_file_name
+    return args, src_reversed_latent_list, src_embedding_list, src_file_name, generator
 
 def get_image_file(path):
     img_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif')
@@ -894,7 +894,7 @@ def get_image_file(path):
     return img_files[0]
 
 if __name__ == "__main__":
-    args, src_reversed_latent_list, src_embedding_list, src_file_name = multi_concept_inversion()
+    args, src_reversed_latent_list, src_embedding_list, src_file_name, generator = multi_concept_inversion()
     now = datetime.datetime.now()
     time_smp = str(now).replace(" ", "_")
     ref_file_name = get_image_file(args.concept_image_dir).split('.')[0]
@@ -912,4 +912,5 @@ if __name__ == "__main__":
         use_direct_inversion=args.use_direct_inversion,
         cross_attention_injection_ratio=args.cross_attention_injection_ratio,
         self_attention_injection_ratio=args.self_attention_injection_ratio,
+        generator=generator,
     )

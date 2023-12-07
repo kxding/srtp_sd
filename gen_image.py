@@ -50,6 +50,7 @@ def gen_image(
         backward_prompts,
         src_reversed_latent_list,
         src_embedding_list,
+        generator,
         guidance_scale=7.5,
         no_controller=False,
         use_direct_inversion=False,
@@ -105,6 +106,7 @@ def gen_image(
         num_inference_steps=50, guidance_scale=7.5,
         uncond_embeddings=src_embedding_list,
         use_direct_inversion=use_direct_inversion,
+        generator=generator,
     )
 
     # save picture
