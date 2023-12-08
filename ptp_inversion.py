@@ -201,9 +201,9 @@ class AttentionStore(AttentionControl):
                         print("transformed_step =", transformed_step.shape)
                         # print("self.step_store[key][i].shape",self.step_store[key][i].shape)
                         new_shape = (8, 1024, 77)  
-                        self.step_store[key][i] = torch.nn.functional.interpolate(self.step_store[key][i], size=new_shape[1:], mode='bilinear', align_corners=False)  
+                        # self.step_store[key][i] = torch.nn.functional.interpolate(self.step_store[key][i], size=new_shape[1:], mode='bilinear', align_corners=False)  
                         
-                        # self.step_store[key][i] = self.step_store[key][i][:8]
+                        self.step_store[key][i] = self.step_store[key][i][:8]
                         print("self.step_store[key][i].shape",self.step_store[key][i].shape)
                         self.attention_store[key][i] += self.step_store[key][i]
                         # self.attention_store[key][i] += nnf.interpolate(self.step_store[key][i], size=self.attention_store[key][i].shape[2:])

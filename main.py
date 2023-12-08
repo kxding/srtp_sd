@@ -885,7 +885,7 @@ def multi_concept_inversion():
 
 
     accelerator.end_training()
-    return args, src_reversed_latent_list, src_embedding_list, src_file_name, generator
+    return args, src_reversed_latent_list, src_embedding_list, src_file_name
 
 def get_image_file(path):
     img_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif')

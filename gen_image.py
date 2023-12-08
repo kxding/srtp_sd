@@ -115,7 +115,6 @@ def gen_image(
         uncond_embeddings=src_embedding_list,
         use_direct_inversion=use_direct_inversion,
         generator=generator,
-        generator=generator,
     )
 
     # save picture
