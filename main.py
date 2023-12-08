@@ -885,7 +885,7 @@ def multi_concept_inversion():
 
 
     accelerator.end_training()
-    return args, src_reversed_latent_list, src_embedding_list, src_file_name
+    return args, src_reversed_latent_list, src_embedding_list, src_file_name, generator
 
 def get_image_file(path):
     img_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif')
@@ -930,5 +930,4 @@ if __name__ == "__main__":
         use_direct_inversion=args.use_direct_inversion,
         cross_attention_injection_ratio=args.cross_attention_injection_ratio,
         self_attention_injection_ratio=args.self_attention_injection_ratio,
-        seed = args.seed,
     )
