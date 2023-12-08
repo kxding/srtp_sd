@@ -48,8 +48,9 @@ def gen_image(
         model_id,
         train_step,
         backward_prompts,
-        src_reversed_latent_list,
-        src_embedding_list,
+        src_reversed_latent_list=None,
+        src_embedding_list=None,
+        seed=0,
         guidance_scale=7.5,
         no_controller=False,
         use_direct_inversion=False,
@@ -61,7 +62,11 @@ def gen_image(
     backward_placeholder_token = "<%s>" % prompt_name_backward
     backward_embeds_dict_path = os.path.join(model_id, backward_embeds_dict_name)
     backward_learned_embeds_dict = torch.load(backward_embeds_dict_path)
+    print("backward_learned_embeds_dict", backward_learned_embeds_dict)
     # get reference embedding
+
+
+
 
     device = "cpu"
     if torch.cuda.is_available():
@@ -77,6 +82,10 @@ def gen_image(
                                                          tokenizer=tokenizer, text_encoder=text_encoder).to(device)
     ldm_stable.safety_checker = lambda images, clip_input: (images, False)
     inversion = Inversion(ldm_stable)
+
+    generator = torch.Generator(device=device)
+    if seed is not None:
+        generator.manual_seed(seed)
 
     # controller arguments
     inversion.init_prompt(forward_prompt)
@@ -105,6 +114,7 @@ def gen_image(
         num_inference_steps=50, guidance_scale=7.5,
         uncond_embeddings=src_embedding_list,
         use_direct_inversion=use_direct_inversion,
+        generator=generator,
     )
 
     # save picture

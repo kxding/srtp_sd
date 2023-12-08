@@ -190,7 +190,23 @@ class AttentionStore(AttentionControl):
         else:
             for key in self.attention_store:
                 for i in range(len(self.attention_store[key])):
-                    self.attention_store[key][i] += self.step_store[key][i]
+                    if self.attention_store[key][i].shape == self.step_store[key][i].shape:
+                        self.attention_store[key][i] += self.step_store[key][i]
+                    else:
+                        print("ATTENTION ERROR ???? tensor size miss match")
+                        print("self.attention_store[key][i].shape",self.attention_store[key][i].shape)
+                        print("self.step_store[key][i].shape",self.step_store[key][i].shape)
+                        import torch.nn.functional as F
+                        transformed_step = F.avg_pool1d(self.step_store[key][i], kernel_size=2)  
+                        print("transformed_step =", transformed_step.shape)
+                        # print("self.step_store[key][i].shape",self.step_store[key][i].shape)
+                        new_shape = (8, 1024, 77)  
+                        self.step_store[key][i] = torch.nn.functional.interpolate(self.step_store[key][i], size=new_shape[1:], mode='bilinear', align_corners=False)  
+                        
+                        # self.step_store[key][i] = self.step_store[key][i][:8]
+                        print("self.step_store[key][i].shape",self.step_store[key][i].shape)
+                        self.attention_store[key][i] += self.step_store[key][i]
+                        # self.attention_store[key][i] += nnf.interpolate(self.step_store[key][i], size=self.attention_store[key][i].shape[2:])
         self.step_store = self.get_empty_store()
 
     def get_average_attention(self):
@@ -699,6 +715,8 @@ class Inversion(DiffusionPipeline):
         )
         text_embeddings = model.text_encoder(text_input.input_ids.to(model.device))[0]
         max_length = text_input.input_ids.shape[-1]
+        # uncond_embedding : src (content)
+        # text_embedding : tgt (concept)
         if uncond_embeddings is None:
             uncond_input = model.tokenizer(
                 [""] * batch_size, padding="max_length", max_length=max_length, return_tensors="pt"
@@ -721,11 +739,12 @@ class Inversion(DiffusionPipeline):
         # print("init_context", init_context)
         # print("uncond_embeddings", uncond_embeddings[0])
         # print("text_embedding", text_embeddings)
-        noise_loss_list = self.offset_calculate(latents, my_init_context, num_inference_steps)
+        if use_direct_inversion:
+            noise_loss_list = self.offset_calculate(latents, my_init_context, num_inference_steps)
         # print("noise_loss_list = ", noise_loss_list)
         # print("noise_loss_list.shape = ", (torch.tensor(noise_loss_list)).shape)
-        print("noise_loss_list[0].shape = ", noise_loss_list[0].shape)
-        print("noist_list.shape = ", (torch.stack(noise_loss_list)).shape)
+            print("noise_loss_list[0].shape = ", noise_loss_list[0].shape)
+            print("noist_list.shape = ", (torch.stack(noise_loss_list)).shape)
 
         for i, t in enumerate(tqdm(model.scheduler.timesteps[-start_time:])):
             if uncond_embeddings_ is None:
@@ -735,7 +754,7 @@ class Inversion(DiffusionPipeline):
             if use_direct_inversion:
                 latents = ptp_utils.diffusion_step_direct_inversion(model, controller, latents, context, t, guidance_scale, noise_loss=noise_loss_list[i], low_resource=False, add_offset=True)
             else:
-                print("original context shape = ", context.shape)
+
                 latents = ptp_utils.diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False)
 
             if return_all:

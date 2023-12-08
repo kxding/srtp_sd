@@ -611,9 +611,7 @@ def multi_concept_inversion():
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision
     )
-    generator = torch.Generator(device=accelerator.device)
-    if args.seed is not None:
-        generator.manual_seed(args.seed)
+
     # Add the placeholder token in tokenizer
     # num_added_tokens = tokenizer.add_tokens(args.placeholder_token)
     '''if num_added_tokens == 0:
@@ -883,6 +881,7 @@ def multi_concept_inversion():
             repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
 
         torch.save(src_embedding_list, os.path.join(args.output_dir, f'{""}_{global_step}.bin'))
+        torch.save(src_reversed_latent_list, os.path.join(args.output_dir, 'src_reversed_latent_list.bin'))
 
 
     accelerator.end_training()
@@ -894,7 +893,26 @@ def get_image_file(path):
     return img_files[0]
 
 if __name__ == "__main__":
-    args, src_reversed_latent_list, src_embedding_list, src_file_name = multi_concept_inversion()
+    src_embedding_list = None
+    args, src_reversed_latent_list, src_embedding_list, src_file_name= multi_concept_inversion()
+
+        # load src embedding
+    # if src_embedding_list is None:
+    #     args = parse_args()
+    #     args.output_dir = "/home/dingkaixin/srtp_sd-2/output/che_12_07_2023_2322"
+    #     print("model_id = ", args.output_dir)
+    #     src_file_name = ""
+    #     model_id=args.output_dir
+    #     train_step = args.max_train_steps
+    #     src_embeds_dict_name = "_%s.bin" % (str(train_step))
+    #     src_embeds_dict_path = os.path.join(model_id, src_embeds_dict_name)
+    #     src_learned_embeds_dict = torch.load(src_embeds_dict_path)
+    #     src_embedding_list = src_learned_embeds_dict
+    #     src_reversed_latent_list = torch.load(os.path.join(model_id, "src_reversed_latent_list.bin"))
+    #     print("src_embedding_list is None, load from %s" % src_embeds_dict_path)
+        # print("src_embedding_list = ", src_embedding_list)
+        # print("src_reversed_latent_list = ", src_reversed_latent_list)
+
     now = datetime.datetime.now()
     time_smp = str(now).replace(" ", "_")
     ref_file_name = get_image_file(args.concept_image_dir).split('.')[0]
@@ -912,4 +930,5 @@ if __name__ == "__main__":
         use_direct_inversion=args.use_direct_inversion,
         cross_attention_injection_ratio=args.cross_attention_injection_ratio,
         self_attention_injection_ratio=args.self_attention_injection_ratio,
+        seed = args.seed,
     )

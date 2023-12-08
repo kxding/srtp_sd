@@ -73,14 +73,17 @@ def diffusion_step_direct_inversion(model, controller, latents, context, t, guid
         noise_pred_uncond = model.unet(latents, t, encoder_hidden_states=context[0])["sample"]
         noise_prediction_text = model.unet(latents, t, encoder_hidden_states=context[1])["sample"]
     else:
-        # latents_input = torch.cat([latents] * 2)
-        latents_input = latents
+        latents_input = torch.cat([latents] * 2)
+        print("latent = ", latents_input.shape)
+        latents_input = latents_input.reshape(4, 4, 64, 64)
+        # latents_input = latents
         # context = torch.cat([context[1], context[2]]).reshape(2, 77, 768)
         # tmp1 = torch.concat((context[0, :32, :], context[1, 32:, :]), dim=0)  
         # tmp2 = torch.concat((context[2, :32, :], context[3, 32:, :]), dim=0)
         # context = torch.stack((tmp1, tmp2), dim=0)
         # print("latents_input =", latents_input.shape) 
-        # print("encoder_hidden_states = ", context.shape)
+        print("encoder_hidden_states = ", context.shape)
+        context = context.reshape(4, 77, 768)
         noise_pred = model.unet(latents_input, t, encoder_hidden_states=context)["sample"]
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
     noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
@@ -96,6 +99,8 @@ def diffusion_step(model, controller, latents, context, t, guidance_scale, low_r
         noise_prediction_text = model.unet(latents, t, encoder_hidden_states=context[1])["sample"]
     else:
         latents_input = torch.cat([latents] * 2)
+        print("original context shape = ", context.shape)
+        print("original latents shape = ", latents_input.shape)
         noise_pred = model.unet(latents_input, t, encoder_hidden_states=context)["sample"]
         noise_pred_uncond, noise_prediction_text = noise_pred.chunk(2)
     noise_pred = noise_pred_uncond + guidance_scale * (noise_prediction_text - noise_pred_uncond)
