@@ -702,7 +702,7 @@ class Inversion(DiffusionPipeline):
         ) 
         null_embed = model.text_encoder(null_input.input_ids.to(model.device))[0]
         null_embed = torch.tensor(null_embed)
-        print("null_embed = ", null_embed.shape)
+        # print("null_embed = ", null_embed.shape)
         if uncond_embeddings is None:
             uncond_input = model.tokenizer(
                 [""] * batch_size, padding="max_length", max_length=max_length, return_tensors="pt"
@@ -711,8 +711,8 @@ class Inversion(DiffusionPipeline):
         else:
             uncond_embeddings_ = None
         latent, latents = ptp_utils.init_latent(init_latent, model, height, width, generator, batch_size)
-        print("latents.shape = ", latents.shape)
-        print("latent.shape = ", latent.shape)
+        # print("latents.shape = ", latents.shape)
+        # print("latent.shape = ", latent.shape)
         model.scheduler.set_timesteps(num_inference_steps)
         for _i in range(len(latent_list)):
             _, latent_list[_i] = ptp_utils.init_latent(latent_list[_i], model, height, width, generator, batch_size)
@@ -733,19 +733,21 @@ class Inversion(DiffusionPipeline):
                 # print("uncond_embeddings = ", uncond_embeddings)
                 uncond_embeddings_t = uncond_embeddings[i]
                 src_embed = torch.stack([null_embed, uncond_embeddings_t.expand(*null_embed.shape).to(model.device)])
-                print("src_embed = ", src_embed.shape)
-                print("text_embeddings = ", text_embeddings.shape)
+                # print("src_embed = ", src_embed.shape)
+                # print("text_embeddings = ", text_embeddings.shape)
                 tgt_embed = torch.stack([null_embed, text_embeddings.expand(*null_embed.shape).to(model.device)])
                 
                 if use_direct_inversion and i != num_inference_steps - 1:
                     difference_src_ref = latent_list[num_inference_steps - i - 1] - ptp_utils.diffusion_step(model, controller, latents_compute, context, t, guidance_scale, low_resource=False)
                     latents_compute = torch.concat((latents_compute[:1] + difference_src_ref[:1], latents_compute[1:]))
                 latents = ptp_utils.diffusion_step(model, controller, latents, context, t, guidance_scale, low_resource=False)
-                print("latents = ", latents.shape)
-                print("latents_compute = ", latents_compute.shape)
+                # print("latents = ", latents.shape)
+                # print("latents_compute = ", latents_compute.shape)
                 
-                print("init_latent = ", init_latent.shape)
+                # print("init_latent = ", init_latent.shape)
                 loss, _ = dds_loss.get_dds_loss(z_source=init_latent, z_target=latents, text_emb_source=src_embed, text_emb_target=tgt_embed)
+                (loss * 2000).backward()
+                optimizer.step()
                 if use_direct_inversion and i != num_inference_steps - 1:
                     latents = torch.concat((latents[:1] + difference_src_ref[:1], latents[1:]))
                 if return_all:
